@@ -1,0 +1,55 @@
+name: "Forwarding"
+description: |2
+  Network N1 is conected to the network N2 via switch S1.
+  N1 has subnet 11.0.0.0/8 and sends IP packets to N2 with subnet 22.0.0.0/8. N2 sends packets in the reverse direction.
+  Forward the correct packets to N1 and N2.
+
+  Topology:
+
+  +------+  1   +-----------+  2   +------+
+  |  N1  | ---- | Switch s1 | ---- |  N2  |
+  +------+      +-----------+      +------+
+
+topology:
+  hosts:
+    - name: N1
+      ipv4: "11.0.0.1"
+    - name: N2
+      ipv4: "22.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [N1, s1]
+    - [N2, s1]
+
+tests:
+  - name: N1 -> N2
+    description: Check if N1 can send packets to N2
+    traffic_events:
+      - event_count: 25
+        host: N1
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 2500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+
+  - name: N2 -> N1
+    description: Check if N2 can send packets to N1
+    traffic_events:
+      - event_count: 25
+        host: N2
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [N1, s1]
+        packet_count: 2500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"

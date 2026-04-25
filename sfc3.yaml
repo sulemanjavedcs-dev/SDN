@@ -1,0 +1,101 @@
+name: "Service Function Chaining"
+description: |2
+  Establish required service chains.
+
+topology:
+  hosts:
+    - name: send
+      ipv4: "11.0.0.1"
+    - name: recv
+      ipv4: "22.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+    - name: s2
+      dpid: 2
+    - name: s3
+      dpid: 3
+    - name: s4
+      dpid: 4
+    - name: i
+      dpid: 5
+    - name: e
+      dpid: 6
+
+  links:
+    - [send,  i]
+    - [   i, s1]
+    - [  s1, s2]
+    - [  s1, s3]
+    - [  s2, s4]
+    - [  s3, s4]
+    - [  s4,  e]
+    - [recv,  e]
+
+tests:
+  - name: Service Chain 1
+    description: Generate traffic with destination ip 22.1.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 1
+        header:
+          ipv4.dst: "22.1.0.0/16"
+        packet_count: 3000
+
+  - name: Service Chain 2, First Use
+    description: Generate traffic with destination ip 22.2.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 1
+        header:
+          ipv4.dst: "22.2.0.0/16"
+        packet_count: 800
+
+  - name: Service Chain 2, Second Use
+    description: Generate traffic with destination ip 22.2.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 4
+        header:
+          ipv4.dst: "22.2.0.0/16"
+        packet_count: 2100
+
+  - name: Service Chain 3, First Use
+    description: Generate traffic with destination ip 22.3.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 4
+        header:
+          ipv4.dst: "22.3.0.0/16"
+        packet_count: 400
+
+  - name: Service Chain 3, Second Use
+    description: Generate traffic with destination ip 22.3.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 13
+        header:
+          ipv4.dst: "22.3.0.0/16"
+        packet_count: 1200
+
+  - name: Service Chain 2, Third Use
+    description: Generate traffic with destination ip 22.2.0.0/16
+    parallel: True
+    traffic_events:
+      - event_count: 1
+        host: send
+        time: 17
+        header:
+          ipv4.dst: "22.2.0.0/16"
+        packet_count: 400

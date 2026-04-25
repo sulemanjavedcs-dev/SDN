@@ -1,0 +1,281 @@
+name: "Routing over Shortest Paths"
+description: |2
+  Implement shortest path routing between all hosts.
+  Provide a textual output on traffic statistics for each flow on every switch.
+  Please refer to the written task description for topology information.
+
+  Between some pairs of hosts, there exist multiple possible fastest paths.
+  In these cases, automated evaluation checks only for the arrival of packets,
+  but not for their correct routing. For all other pairs of hosts, routing
+  is checked as well.
+
+topology:
+  hosts:
+    - name: H1
+      ipv4: "11.0.0.1"
+    - name: H2
+      ipv4: "22.0.0.1"
+    - name: H3
+      ipv4: "33.0.0.1"
+    - name: H4
+      ipv4: "44.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+    - name: s2
+      dpid: 2
+    - name: s3
+      dpid: 3
+    - name: s4
+      dpid: 4
+    - name: s5
+      dpid: 5
+    - name: s6
+      dpid: 6
+    - name: s7
+      dpid: 7
+    - name: s8
+      dpid: 8
+
+  links:
+    - [s1, s2]
+    - [s1, s3]
+    - [s1, s4]
+    - [s2, s3]
+    - [s2, s5]
+    - [s3, s4]
+    - [s3, s5]
+    - [s3, s6]
+    - [s4, s6]
+    - [s4, s8]
+    - [s5, s6]
+    - [s5, s7]
+    - [s6, s7]
+    - [s6, s8]
+    - [s7, s8]
+    - [s1, H1]
+    - [s4, H2]
+    - [s8, H3]
+    - [s7, H4]
+
+tests:
+  - name: H1 -> H2
+    description: Check if H1 can send packets to H2
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s1, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+      - link: [H2, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+
+  - name: H1 -> H3
+    description: Check if H1 can send packets to H3
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "33.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s1, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+      - link: [s4, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+      - link: [H3, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+
+  - name: H1 -> H4
+    description: Check if H1 can send packets to H4
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [H4, s7]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "44.0.0.0/8"
+
+  - name: H2 -> H1
+    description: Check if H2 can send packets to H1
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H2
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s4, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+      - link: [H1, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+
+  - name: H2 -> H3
+    description: Check if H2 can send packets to H3
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H2
+        header:
+          ipv4.dst: "33.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s4, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+      - link: [H3, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+
+  - name: H2 -> H4
+    description: Check if H2 can send packets to H4
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H2
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [H4, s7]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "44.0.0.0/8"
+
+  - name: H3 -> H1
+    description: Check if H3 can send packets to H1
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H3
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s1, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+      - link: [s4, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+      - link: [H1, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+
+  - name: H3 -> H2
+    description: Check if H3 can send packets to H2
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H3
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s8, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+      - link: [H2, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+
+  - name: H3 -> H4
+    description: Check if H3 can send packets to H4
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H3
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s8, s7]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "44.0.0.0/8"
+      - link: [H4, s7]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "44.0.0.0/8"
+
+  - name: H4 -> H1
+    description: Check if H4 can send packets to H1
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H4
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "11.0.0.0/8"
+
+  - name: H4 -> H2
+    description: Check if H4 can send packets to H2
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H4
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [H2, s4]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+
+  - name: H4 -> H3
+    description: Check if H4 can send packets to H3
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: H4
+        header:
+          ipv4.dst: "33.0.0.0/8"
+        packet_count: 100
+    observation_points:
+      - link: [s7, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"
+      - link: [H3, s8]
+        packet_count: 500
+        header_rules:
+          ipv4.dst: "33.0.0.0/8"

@@ -1,0 +1,191 @@
+name: "Security 1"
+description: |2
+  Use this first task to make yourself familiar with the framework.
+
+  Currently, there is a simple topology with one switch and four networks (AS1, AS2022, AS16 and AS114). Edit demo.py in such a way, that all networks can reach each other.
+  This means, that the automated evaluation, which sends one packet from every host to every other host, results in all successes.
+
+  Topology:
+
+                 +-----------+
+                 |    L1     |
+                 +-----------+
+                   |
+                   | 2
+                   |
+  +-------+  3   +-----------+  1   +--------+
+  |   R1  | ---- | Switch s1 | ---- |   H1   |
+  +-------+      +-----------+      +--------+
+                   |
+                   | 4
+                   |
+                 +-----------+
+                 |    M1     |
+                 +-----------+
+
+topology:
+  hosts:
+    - name: H1
+      ipv4: "11.0.0.1"
+    - name: L1
+      ipv4: "22.0.0.1"
+    - name: R1
+      ipv4: "33.0.0.1"
+    - name: M1
+      ipv4: "44.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [H1, s1]
+    - [L1, s1]
+    - [R1, s1]
+    - [M1, s1]
+
+tests:
+  - name: Block Local to Remote
+    description: Check if Communication from Local to Remote is blocked.
+    traffic_events:
+      - event_count: 5
+        host: L1
+        header:
+          ipv4.dst: "33.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 0
+      - link: [R1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Block Remote to Local
+    description: Check if Communication from Remote to Local is blocked.
+    traffic_events:
+      - event_count: 5
+        host: R1
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 0
+      - link: [L1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+
+  - name: Local to Hosts
+    description: Check if Communication from Local to Hosts is working.
+    traffic_events:
+      - event_count: 5
+        host: L1
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 50
+      - link: [R1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Hosts to Local
+    description: Check if Communication from Hosts to Local is working.
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [L1, s1]
+        packet_count: 50
+      - link: [R1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Remote to Hosts
+    description: Check if Communication from Remote to Hosts is working.
+    traffic_events:
+      - event_count: 5
+        host: R1
+        header:
+          ipv4.dst: "11.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 50
+      - link: [L1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Hosts to Remote
+    description: Check if Communication from Hosts to Remote is working.
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "33.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [L1, s1]
+        packet_count: 0
+      - link: [R1, s1]
+        packet_count: 50
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Block Local to Monitor
+    description: Check if Communication from Local to Monitor is blocked.
+    traffic_events:
+      - event_count: 5
+        host: L1
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 0
+      - link: [R1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Block Remote to Monitor
+    description: Check if Communication from Remote to Monitor is blocked.
+    traffic_events:
+      - event_count: 5
+        host: R1
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [H1, s1]
+        packet_count: 0
+      - link: [L1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0
+
+  - name: Block Hosts to Monitor
+    description: Check if Communication from Hosts to Monitor is blocked.
+    traffic_events:
+      - event_count: 5
+        host: H1
+        header:
+          ipv4.dst: "44.0.0.0/8"
+        packet_count: 10
+    observation_points:
+      - link: [L1, s1]
+        packet_count: 0
+      - link: [R1, s1]
+        packet_count: 0
+      - link: [M1, s1]
+        packet_count: 0

@@ -1,0 +1,51 @@
+# this file is used to test correct parsing
+name: Flooding
+description: Establish basic connectivity
+topology:
+  hosts:
+    - name: h1
+      ipv4: "192.168.178.1"
+    - name: h2
+      ipv4: "192.168.178.2"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [h1, s1]
+    - [h2, s1]
+
+tests:
+  - name: h1 -> h2
+    description: Check if h1 can reach h2
+    restart: True
+    traffic_events:
+      - event_count: 1
+        host: h1
+        header:
+          ethernet.src: aa:bb:cc:11:11:11
+          ipv4.dst: 192.168.178.2
+        packet_count: 100
+        time: 0
+    observation_points:
+      - link: [h2, s1]
+        packet_count: 100
+        header_rules:
+          ipv4.dst: 192.168.178.2
+  - name: h2 -> h1
+    description: Check if h2 can reach h1
+    restart: True
+    traffic_events:
+      - event_count: 1
+        host: h2
+        header:
+          ethernet.src: aa:bb:cc:22:22:22
+          ipv4.dst: 192.168.178.1
+        packet_count: 100
+        time: 0
+    observation_points:
+      - link: [h1, s1]
+        packet_count: 100
+        header_rules:
+          ipv4.dst: 192.168.178.1

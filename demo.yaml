@@ -1,0 +1,169 @@
+name: "Demo Scenario"
+description: |2
+  Use this first task to make yourself familiar with the framework.
+
+  Currently, there is a simple topology with one switch and four networks (AS1, AS2022, AS16 and AS114). Edit demo.py in such a way, that all networks can reach each other.
+  This means, that the automated evaluation, which sends one packet from every host to every other host, results in all successes.
+
+  Topology:
+
+                 +-----------+
+                 |    AS1    |
+                 +-----------+
+                   |
+                   | 1
+                   |
+  +-------+  4   +-----------+  2   +--------+
+  | AS144 | ---- | Switch s1 | ---- | AS2022 |
+  +-------+      +-----------+      +--------+
+                   |
+                   | 3
+                   |
+                 +-----------+
+                 |   AS16    |
+                 +-----------+
+
+topology:
+  hosts:
+    - name: AS1
+      ipv4: "17.0.0.1"
+    - name: AS2022
+      ipv4: "21.0.0.1"
+    - name: AS16
+      ipv4: "23.42.0.1"
+    - name: AS144
+      ipv4: "11.8.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [AS1, s1]
+    - [AS2022, s1]
+    - [AS16, s1]
+    - [AS144, s1]
+
+tests:
+  - name: Ping AS1 -> AS16
+    description: Check if AS1 can send packets to AS16
+    traffic_events:
+      - host: AS1
+        header:
+          ipv4.dst: "23.42.0.1"
+    observation_points:
+      - link: [AS16, s1]
+        packet_count: 1
+
+  - name: Ping AS1 -> AS144
+    description: Check if AS1 can send packets to AS144
+    traffic_events:
+      - host: AS1
+        header:
+          ipv4.dst: "11.8.0.1"
+    observation_points:
+      - link: [AS144, s1]
+        packet_count: 1
+
+  - name: Ping AS1 -> AS2022
+    description: Check if AS1 can send packets to AS2022
+    traffic_events:
+      - host: AS1
+        header:
+          ipv4.dst: "21.0.0.1"
+    observation_points:
+      - link: [AS2022, s1]
+        packet_count: 1
+
+
+  - name: Ping AS16 -> AS1
+    description: Check if AS16 can send packets to AS1
+    traffic_events:
+      - host: AS16
+        header:
+          ipv4.dst: "17.0.0.1"
+    observation_points:
+      - link: [AS1, s1]
+        packet_count: 1
+
+  - name: Ping AS16 -> AS144
+    description: Check if AS16 can send packets to AS144
+    traffic_events:
+      - host: AS16
+        header:
+          ipv4.dst: "11.8.0.1"
+    observation_points:
+      - link: [AS144, s1]
+        packet_count: 1
+
+  - name: Ping AS16 -> AS2022
+    description: Check if AS16 can send packets to AS2022
+    traffic_events:
+      - host: AS16
+        header:
+          ipv4.dst: "21.0.0.1"
+    observation_points:
+      - link: [AS2022, s1]
+        packet_count: 1
+
+
+  - name: Ping AS144 -> AS1
+    description: Check if AS144 can send packets to AS1
+    traffic_events:
+      - host: AS144
+        header:
+          ipv4.dst: "17.0.0.1"
+    observation_points:
+      - link: [AS1, s1]
+        packet_count: 1
+
+  - name: Ping AS144 -> AS16
+    description: Check if AS144 can send packets to AS16
+    traffic_events:
+      - host: AS144
+        header:
+          ipv4.dst: "23.42.0.1"
+    observation_points:
+      - link: [AS16, s1]
+        packet_count: 1
+
+  - name: Ping AS144 -> AS2022
+    description: Check if AS144 can send packets to AS2022
+    traffic_events:
+      - host: AS144
+        header:
+          ipv4.dst: "21.0.0.1"
+    observation_points:
+      - link: [AS2022, s1]
+        packet_count: 1
+
+
+  - name: Ping AS2022 -> AS1
+    description: Check if AS2022 can send packets to AS1
+    traffic_events:
+      - host: AS2022
+        header:
+          ipv4.dst: "17.0.0.1"
+    observation_points:
+      - link: [AS1, s1]
+        packet_count: 1
+
+  - name: Ping AS2022 -> AS16
+    description: Check if AS2022 can send packets to AS16
+    traffic_events:
+      - host: AS2022
+        header:
+          ipv4.dst: "23.42.0.1"
+    observation_points:
+      - link: [AS16, s1]
+        packet_count: 1
+
+  - name: Ping AS2022 -> AS144
+    description: Check if AS2022 can send packets to AS144
+    traffic_events:
+      - host: AS2022
+        header:
+          ipv4.dst: "11.8.0.1"
+    observation_points:
+      - link: [AS144, s1]
+        packet_count: 1

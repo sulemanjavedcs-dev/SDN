@@ -1,0 +1,59 @@
+name: "Loadbalancer"
+description: |2
+  Distribute the traffic from host H1 evenly among host H2 and H3.
+  All traffic is directed to randomly chosen IP destination addresses in the subnet 22.0.0.0/8.
+  All hosts are connected to each other by switch S1.
+
+  Topology:
+
+                     +-----------+
+                     |    H1     |
+                     +-----------+
+                       |
+                       | 1
+                       |
+  +-----------+  3   +-----------+  2   +-----------+
+  |    H3     | ---- | Switch s1 | ---- |    H2     |
+  +-----------+      +-----------+      +-----------+
+
+topology:
+  hosts:
+    - name: H1
+      ipv4: "11.0.0.1"
+    - name: H2
+      ipv4: "22.0.0.1"
+    - name: H3
+      ipv4: "22.0.0.2"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [H1, s1]
+    - [H2, s1]
+    - [H3, s1]
+
+tests:
+  - name: Test Traffic
+    description: Sends traffic to 22.0.0.0/8 and expects approximately half of
+      it to arrive at either host.
+    traffic_events:
+      - event_count: 100
+        host: H1
+        header:
+          ipv4.dst: "22.0.0.0/8"
+        packet_count: 50
+    observation_points:
+      - link: [H2, s1]
+        packet_count:
+          min: 1750
+          max: 3250
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"
+      - link: [H3, s1]
+        packet_count:
+          min: 1750
+          max: 3250
+        header_rules:
+          ipv4.dst: "22.0.0.0/8"

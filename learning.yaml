@@ -1,0 +1,45 @@
+name: "Learning switch"
+description: |2
+  The four hosts H1 ... H4 are connected to the switch S1.
+  Use reactive flow programming to learn which Ethernet addresses are associated with each switch port.
+  Program flow rules based on this information to enable forwarding between all hosts.
+  Use the pingall function to verify connectivity.
+
+  Topology:
+
+                     +-----------+
+                     |    H2     |
+                     +-----------+
+                       |
+                       | 2
+                       |
+  +-----------+  1   +-----------+  3   +-----------+
+  |    H1     | ---- | Switch s1 | ---- |    H3     |
+  +-----------+      +-----------+      +-----------+
+                       |
+                       | 4
+                       |
+                     +-----------+
+                     |    H4     |
+                     +-----------+
+
+topology:
+  hosts:
+    - name: H1
+      ipv4: "10.0.0.1"
+    - name: H2
+      ipv4: "10.0.0.2"
+    - name: H3
+      ipv4: "10.0.0.3"
+    - name: H4
+      ipv4: "10.0.0.4"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [H1, s1]
+    - [H2, s1]
+    - [H3, s1]
+    - [H4, s1]

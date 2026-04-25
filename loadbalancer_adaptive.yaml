@@ -1,0 +1,86 @@
+name: "Loadbalancer"
+description: |2
+  Host H1 sends IP packets to host H2 and H3.
+  Forward all traffic with destination IP addresses in 22.0.0.0/8 to host H2 and 33.0.0.0/8 to host H3.
+  The amount of traffic of these flows varies over time.
+  Dynamically distribute all traffic with a destination IP address in 44.0.0.0/8 in such a way that host H2 and H3 receive an equal share of the combined traffic (i.e., all flows sent from H1) over time.
+
+  Topology:
+
+                     +-----------+
+                     |    H1     |
+                     +-----------+
+                       |
+                       | 1
+                       |
+  +-----------+  3   +-----------+  2   +-----------+
+  |    H3     | ---- | Switch s1 | ---- |    H2     |
+  +-----------+      +-----------+      +-----------+
+
+topology:
+  hosts:
+    - name: H1
+      ipv4: "11.0.0.1"
+    - name: H2
+      ipv4: "22.0.0.1"
+    - name: H3
+      ipv4: "22.0.0.2"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [H1, s1]
+    - [H2, s1]
+    - [H3, s1]
+
+tests:
+  - name: Test Traffic
+    description: Sends traffic to 22.0.0.0/8, 33.0.0.0/8 and 44.0.0.0/8 and
+      expects all of it to be approximately balanced between H2 and H3.
+    traffic_events:
+      - event_count: 10
+        host: H1
+        time:
+          min: 0
+          max: 3000
+        header:
+          ipv4.src: "11.0.0.1"
+          ipv4.dst:
+            - "22.0.0.0/8"
+            - "22.0.0.0/8"
+            - "33.0.0.0/8"
+            - "44.0.0.0/8"
+        packet_count: 500
+      - event_count: 10
+        host: H1
+        time:
+          min: 2000
+          max: 5000
+        header:
+          ipv4.src: "11.0.0.1"
+          ipv4.dst:
+            - "22.0.0.0/8"
+            - "33.0.0.0/8"
+            - "44.0.0.0/8"
+            - "44.0.0.0/8"
+            - "44.0.0.0/8"
+        packet_count: 500
+    observation_points:
+      - link: [H2, s1]
+        packet_count:
+          min: 4000
+          max: 6000
+        header_rules:
+          ipv4.dst:
+            - "22.0.0.0/8"
+            - "44.0.0.0/8"
+      - link: [H3, s1]
+        packet_count:
+          min: 4000
+          max: 6000
+        header_rules:
+          ipv4.dst:
+            - "33.0.0.0/8"
+            - "44.0.0.0/8"

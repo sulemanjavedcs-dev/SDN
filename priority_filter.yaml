@@ -1,0 +1,88 @@
+name: "Priorityfilter"
+description: |2
+  Network N1 is linked to the networks N2 and N3 by switch S1. N1 sends IP packets from subnet 11.0.0.0/8 to subnet 22.0.0.0/8 of N2 and subnet 33.0.0.0/8 of N3. Unfortunately, due to a misconfiguration some packets have an IP source address from the non-public subnet 10.0.0.0/8. Forward the correct packets to N1 and N2, but drop any packets with non-public source addresses.
+
+  Topology:
+
+                     +-----------+
+                     |    N1     |
+                     +-----------+
+                       |
+                       | 1
+                       |
+  +-----------+  3   +-----------+  2   +-----------+
+  |    N3     | ---- | Switch s1 | ---- |    N2     |
+  +-----------+      +-----------+      +-----------+
+
+topology:
+  hosts:
+    - name: N1
+      ipv4: "11.0.0.1"
+    - name: N2
+      ipv4: "22.0.0.1"
+    - name: N3
+      ipv4: "33.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [N1, s1]
+    - [N2, s1]
+    - [N3, s1]
+
+tests:
+  - name: Valid Traffic to N2
+    description: Send traffic from 11.0.0.0/8, check if it gets forwarded correctly.
+    parallel: True
+    traffic_events:
+      - event_count: 25
+        host: N1
+        packet_count: 100
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "22.0.0.0/8"
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 2500
+        header_rules:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "22.0.0.0/8"
+      - link: [N3, s1]
+        packet_count: 0
+
+  - name: Valid Traffic to N3
+    description: Send traffic from 11.0.0.0/8, check if it gets forwarded correctly.
+    parallel: True
+    traffic_events:
+      - event_count: 25
+        host: N1
+        packet_count: 100
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "33.0.0.0/8"
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 0
+      - link: [N3, s1]
+        packet_count: 2500
+        header_rules:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "33.0.0.0/8"
+
+  - name: Invalid Traffic
+    description: Send traffic from 10.0.0.0/8, check if it gets removed correctly.
+    parallel: True
+    traffic_events:
+      - event_count: 25
+        host: N1
+        packet_count: 100
+        header:
+          ipv4.src: "10.0.0.0/8"
+          ipv4.dst: ["22.0.0.0/8", "33.0.0.0/8"]
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 0
+      - link: [N3, s1]
+        packet_count: 0

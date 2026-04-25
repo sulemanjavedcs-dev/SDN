@@ -1,0 +1,142 @@
+name: "Task 3.1"
+description: |2
+  Task:
+
+  Currently, there is a simple topology with one switch and four networks (AS1, AS2022, AS16 and AS114). Program your app to prioritize VIP customers (send their traffic via the super-low-delay uplink to AS16).
+
+  Topology:
+
+                 +-----------+
+                 |    AS1    |
+                 +-----------+
+                   |
+                   | 1
+                   |
+  +-------+  4   +-----------+  2   +--------+
+  | AS144 | ---- | Switch s1 | ---- | AS2022 |
+  +-------+      +-----------+      +--------+
+                   |
+                   | 3
+                   |
+                 +-----------+
+                 |   AS16    |
+                 +-----------+
+
+topology:
+  hosts:
+    - name: AS1
+      ipv4: "17.0.0.1"
+    - name: AS2022
+      ipv4: "21.0.0.1"
+    - name: AS16
+      ipv4: "23.42.0.1"
+    - name: AS144
+      ipv4: "11.8.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [AS1, s1]
+    - [AS2022, s1]
+    - [AS16, s1]
+    - [AS144, s1]
+
+tests:
+  - name: REGULAR
+    description: "This test checks if regular traffic is routed
+      correctly. It sends some regular traffic from AS1 and checks if it
+      can be observed coming into AS144 via the AS144 <-> s1 link.
+      It also checks, that the packets of this traffic don't show up at
+      AS16 and AS2022."
+    restart: False
+    traffic_events:
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.8.15.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.10.0.0/16"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.10.143.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.12.0.0/16"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+    observation_points:
+      - link: [AS2022, s1]
+        packet_count: 0
+      - link: [AS144, s1]
+        packet_count: 2000
+      - link: [AS16, s1]
+        packet_count: 0
+
+
+  - name: VIP
+    description: "This test checks if VIP traffic is routed
+      correctly. It sends some VIP traffic from AS1 and checks if it
+      can be observed coming into AS16 via the AS16 <-> s1 link.
+      It also checks, that the packets of this traffic don't show up at
+      AS144 and AS2022."
+    restart: True
+    traffic_events:
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.4.3.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.4.14.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.6.105.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+      - event_count: 5
+        host: AS1
+        header:
+          ipv4.src: "17.6.165.0/24"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+    observation_points:
+      - link: [AS2022, s1]
+        packet_count: 0
+      - link: [AS144, s1]
+        packet_count: 0
+      - link: [AS16, s1]
+        packet_count: 2000

@@ -1,0 +1,149 @@
+name: "Timed Mirror"
+description: |2
+  Traffic from network N1 to N2 and N3 (ip subnets 22.0.0.0/8
+  and 33.0.0.0/8 respectively) shall be forwarded to those
+  networks. However, whenever a flow with a destination IP address
+  outside of those address ranges occurs, the entire traffic
+  to the /8 subnet that contains the IP address shall be mirrored
+  to N4 for 4 seconds and dropped afterwards.
+
+  Topology:
+
+                     +-----------+
+                     |    N1     |
+                     +-----------+
+                       |
+                       | 1
+                       |
+  +-----------+  4   +-----------+  2   +-----------+
+  |    N4     | ---- | Switch s1 | ---- |    N2     |
+  +-----------+      +-----------+      +-----------+
+                       |                 22.0.0.0/8
+                       | 3
+                       |
+                     +-----------+
+                     |    N3     |
+                     +-----------+
+                      33.0.0.0/8
+
+topology:
+  hosts:
+    - name: N1
+      ipv4: "11.0.0.1"
+    - name: N2
+      ipv4: "22.0.0.1"
+    - name: N3
+      ipv4: "33.0.0.1"
+    - name: N4
+      ipv4: "44.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+
+  links:
+    - [N1, s1]
+    - [N2, s1]
+    - [N3, s1]
+    - [N4, s1]
+
+tests:
+  - name: Valid Traffic to N2
+    description: Send traffic to 22.0.0.0/8 and check if it gets forwarded correctly.
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "22.0.0.0/8"
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "22.0.0.0/8"
+      - link: [N3, s1]
+        packet_count: 0
+      - link: [N4, s1]
+        packet_count: 0
+
+  - name: Valid Traffic to N3
+    description: Send traffic to 33.0.0.0/8 and check if it gets forwarded correctly.
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "33.0.0.0/8"
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 0
+      - link: [N3, s1]
+        packet_count: 500
+        header_rules:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "33.0.0.0/8"
+      - link: [N4, s1]
+        packet_count: 0
+
+  - name: Mirrored Traffic
+    description: Send traffic to some invalid subnet, check if it gets mirrored at first and dropped later.
+    parallel: True
+    traffic_events:
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 0
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "10.0.0.0/8"
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 0
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "44.0.0.0/8"
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 0
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "123.0.0.0/8"
+
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 8000
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "10.0.0.0/8"
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 8000
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "44.0.0.0/8"
+      - event_count: 5
+        host: N1
+        packet_count: 100
+        time: 8000
+        header:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: "123.0.0.0/8"
+    observation_points:
+      - link: [N2, s1]
+        packet_count: 0
+      - link: [N3, s1]
+        packet_count: 0
+      - link: [N4, s1]
+        packet_count: 1500
+        header_rules:
+          ipv4.src: "11.0.0.0/8"
+          ipv4.dst: ["10.0.0.0/8", "44.0.0.0/8", "123.0.0.0/8"]

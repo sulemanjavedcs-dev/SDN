@@ -1,0 +1,76 @@
+name: "Task 3.3"
+description: |2
+  Task:
+
+  Implement load balancing, by sending each new flow to a different node (N1 .. N4). Flows are distinguished by IP source and destination address. Start over at N1 once you reached N4. You can find the ports connecting switches and nodes below.
+
+  Topology:
+
+  +----+ +----+                         +----+ +----+
+  | N1 | | N2 |                         | N3 | | N4 |
+  +----+ +----+                         +----+ +----+
+    |      |                              |      |
+    | 2    | 3                            | 2    | 3
+  +-----------+ 1  2 +-----------+ 3  1 +-----------+
+  | Switch s2 | ---- | Switch s1 | ---- | Switch s3 |
+  +-----------+      +-----------+      +-----------+
+                          | 1
+                          |
+                     +-----------+
+                     |  Ingress  |
+                     +-----------+
+
+topology:
+  hosts:
+    - name: Ingress
+      ipv4: "10.0.0.1"
+    - name: N1
+      ipv4: "11.0.0.1"
+    - name: N2
+      ipv4: "12.0.0.1"
+    - name: N3
+      ipv4: "13.0.0.1"
+    - name: N4
+      ipv4: "14.0.0.1"
+
+  switches:
+    - name: s1
+      dpid: 1
+    - name: s2
+      dpid: 2
+    - name: s3
+      dpid: 3
+
+  links:
+    - [Ingress, s1]
+    - [s1, s2]
+    - [s1, s3]
+    - [s2, N1]
+    - [s2, N2]
+    - [s3, N3]
+    - [s3, N4]
+
+tests:
+  - name: Load
+    description: "This test checks if traffic is balanced among
+      the desitnation nodes"
+    restart: True
+    traffic_events:
+      - event_count: 24
+        host: Ingress
+        header:
+          ipv4.src: "0.0.0.0/0"
+          ipv4.dst: "0.0.0.0/0"
+        packet_count: 100
+        time:
+          min: 0
+          max: 4000
+    observation_points:
+      - link: [N1, s2]
+        packet_count: 600
+      - link: [N2, s2]
+        packet_count: 600
+      - link: [N3, s3]
+        packet_count: 600
+      - link: [N4, s3]
+        packet_count: 600
