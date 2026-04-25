@@ -1,20 +1,5 @@
 # =============================================================================
 # Task 1.3 - Priority-Based Filtering
-# Filename: ppsdn26_ujgpb_task13.py
-# Scenario: priority_filter.yaml
-# Evaluation: YES (automatic)
-#
-# TOPOLOGY:
-#                      +-----------+
-#                      |    N1     |  (sends traffic, src: 11.0.0.0/8 or 10.0.0.0/8)
-#                      +-----------+
-#                        |
-#                        | port 1
-#                        |
-#   +-----------+  3   +-----------+  2   +-----------+
-#   |    N3     | ---- | Switch s1 | ---- |    N2     |
-#   +-----------+      +-----------+      +-----------+
-#   33.0.0.0/8                            22.0.0.0/8
 #
 # PROBLEM:
 #   N1 sends IP packets to N2 and N3. Most are fine (src=11.0.0.0/8).
@@ -36,10 +21,7 @@
 #     As required by the assignment ("use priority 0 for default flows").
 #     Any packet not matched by priority 1 or 2 rules is dropped silently.
 #
-# ASSIGNMENT REQUIREMENTS:
-#   - All flow rules exclusively use IP for matching (eth_type=ETH_TYPE_IP required)
-#   - Priority 0 for default flows
-#   - Priorities arranged carefully (higher = more specific/important)
+
 # =============================================================================
 
 from controller import CockpitApp
